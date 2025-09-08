@@ -1,0 +1,2 @@
+# Run the baseline script
+uv run skeleton_script_baseline_model.py data/vep/HGVS_2014_VEP_baseline.tsv data/BLOSUM62.txt -o data/baseline_output.tsv
