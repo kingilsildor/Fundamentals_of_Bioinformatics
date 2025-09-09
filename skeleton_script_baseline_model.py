@@ -94,19 +94,12 @@ def parse_vep(path):
                 hgvs_ids.append(line.split("\t")[0])
                 # Get amino acid mutation which is in the second column in the file
                 vars = line.split("\t")[1]
-                #########################
-                ### START CODING HERE ###
-                #########################
-                # You need to get reference and mutation AAs from vars separately and append to the respective lists:
-                # ref_aas needs to contain reference amino acids;
-                # mut_aas needs to contain mutated amino acids.
-                # Have a look at vars to see how AAs can be separated from the string and think
-                # which string method you could use.
-                # Append the retrieved reference and mutation amino acids to the respective lists
-
-                #########################
-                ###  END CODING HERE  ###
-                #########################
+                # Get reference AA and mutated AA (separated by /)
+                ref_aa, mut_aa = vars.split('/')
+                # Append the AA to the reference and mutation arrays, respectively
+                ref_aas.append(ref_aa)
+                mut_aas.append(mut_aa)
+                
     return hgvs_ids, ref_aas, mut_aas
 
 
@@ -123,26 +116,13 @@ def run_baseline(hgvs_ids, ref_aas, mut_aas, blosum_dict):
     # A list to store substitution scores for a dataset of SNPs
     scores = []
 
-    #########################
-    ### START CODING HERE ###
-    #########################
-    # You need to calculate the score for each SNP using a for-loop.
-    # We need to have access to each HGVS ID, reference AA, and mutation AA. These can be found in
-    # hgvs_ids, ref_aas, and mut_aas, respectively. Note, these lists have the same length.
-    # You can use the following loop:
-    # for i in range(len(hgvs_ids)):
-    # Get reference and mutation AAs from the corresponding lists
-    # ref_aa = ...
-    # mut_aa = ...
-
-    # Compute BLOSUM62 substitution score the reference AA and the mutation AA stored in blosum_dict
-    # score = ...
-
-    # Append the score to scores
-
-    #########################
-    ###  END CODING HERE  ###
-    #########################
+    # Loop through each HGVS ID and calculate the score for the SNP
+    for i in range(len(hgvs_ids)): 
+        # Get reference and mutation AAs from the corresponding lists
+        ref_aa = ref_aas[i]
+        mut_aa = mut_aas[i]
+        # Get BLOSUM62 substitution score of reference AA for the mutation AA and append to scores array
+        scores.append(blosum_dict[ref_aa][mut_aa])
 
     return scores
 
