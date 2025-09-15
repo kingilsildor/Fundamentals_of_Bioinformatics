@@ -135,7 +135,7 @@ def count_total_results(predictor_score_dict, benchmark_dict):
         Calculates the total number of positives (P), or pathogenic results, and negatives (N), or benign results.
         :param predictor_score_dict: a dict of all predictor scores
         :param benchmark_dict: a dict of benchmark classifications
-        :return: a list of ints for the total number of pathogenic and benign results
+        :return: a list of ints for the total number of pathogenic and benign results for that predictor
     """
 
     pathogenic = 0
@@ -161,26 +161,18 @@ def calculate_coordinates(predictor_score_dict, benchmark_dict, out_filepath):
     score_hgvs_pairs = [(v, k) for k, v in predictor_score_dict.items()]
 
     sorted_score_hgvs_pairs = score_hgvs_pairs
-    
-    #########################
-    ### START CODING HERE ###
-    #########################
-    # You need to sort the scores in the correct order for the ROC plot.
-    # Use the following if-statement and replace the question mark with the type of the predictor.
-    # It will put the ROC curve at the correct side of the diagonal line.
 
-    # if type_predictor == ? :
-    #     sorted_score_hgvs_pairs = sorted(score_hgvs_pairs)
-    # else:
-    #     sorted_score_hgvs_pairs = sorted(score_hgvs_pairs, reverse=True)
+    if type_predictor == 'polyphen':
+        sorted_score_hgvs_pairs = sorted(score_hgvs_pairs, reverse = True)
+    else:
+        sorted_score_hgvs_pairs = sorted(score_hgvs_pairs)
 
-    #########################
-    ###  END CODING HERE  ###
-    #########################
-
-    # Later, each coordinate in the ROC plot will be associated with a predictor score (a threshold score). Thus, we
-    # need a separate list for predictor scores
+    # Later, each coordinate in the ROC plot will be associated with a predictor score (a threshold score).
+    # Thus, we need a separate list for predictor scores
     coordinate_score = [sorted_score_hgvs_pairs[0][0]]
+    # This is a list of thresholds used to calculate the ROC points. We start with the extreme end of 
+    # possible thresholds (all would be classified as pathogenic, correctly classified all actual pathogenic
+    # but incorrectly classified all actual benign).
 
     # Create lists to store coordinates (tpr, fpr). Starts in (0,0)
     tpr = [0.0]
@@ -190,12 +182,13 @@ def calculate_coordinates(predictor_score_dict, benchmark_dict, out_filepath):
     num_tp = 0
     num_fp = 0
 
-    # Get the total number of positives (P) and negatives (N)
+    # Get the total number of positives (P) and negatives (N) for this predictor
     total_p, total_n = count_total_results(predictor_score_dict, benchmark_dict)
 
     # Get a list of indices of scores before breakpoints
     # A breakpoint is the place in the sorted list of scores where the score changes.
     # the index_prebreakpoint_score list will hold the indices just before the change.
+    # these scores will be our thresholds
     index_prebreakpoint_score = []
     previous_score = sorted_score_hgvs_pairs[0][0]
     for i in range(len(sorted_score_hgvs_pairs)):
@@ -213,25 +206,24 @@ def calculate_coordinates(predictor_score_dict, benchmark_dict, out_filepath):
         score = sorted_score_hgvs_pairs[i][0]
         hgvs = sorted_score_hgvs_pairs[i][1]
 
-        #########################
-        ### START CODING HERE ###
-        #########################
         # Determine whether the SNP is classified by the benchmark as:
         #    Pathogenic -> actual positive, thus a true positive (y-coordinate)
         #    Benign     -> actual negative, thus a false positive (x-coordinate)
+        if benchmark_dict[hgvs] == "Pathogenic":
+            num_tp += 1
+        else:
+            num_fp += 1
 
-        # Increase the respective value of num_fp or num_tp
-
-        # Now, you need to calculate TPR and FPR for unique scores as TP/P and FP/N, respectively,
-        # using num_fp, num_tp, total_n, and total_p correctly. Append the values
+        # Calculate TPR and FPR for unique scores as TP/P and FP/N, respectively,
+        # using num_fp, num_tp, total_n, and total_p. Append the values
         # to the corresponding lists: tpr is a list of y-coordinates and fpr is a list of x-coordinates.
-        # Calculate the rates if HGVS score index i is the index of the score before a breakpoint
+        # Only need to calculate the rates if HGVS score index i is the index of the score before a breakpoint
         # (use index_prebreakpoint_score). Also, append the score to coordinate_score.
+        if i in index_prebreakpoint_score:
+            tpr.append(num_tp/total_p)
+            fpr.append(num_fp/total_n)
+            coordinate_score.append(score)
 
-
-        #########################
-        ###  END CODING HERE  ###
-        #########################
     if out_filepath:
         out_dir, out_filename = os.path.split(out_filepath)
         # Write coordinates to a .tsv file
@@ -254,14 +246,12 @@ def integrate(fpr, tpr):
     last_tpr = tpr[0]
 
     for cur_fpr, cur_tpr in list(zip(fpr, tpr))[1:]:
-        #########################
-        ### START CODING HERE ###
-        #########################
-        # Calculate AUC
-
-        #########################
-        ###  END CODING HERE  ###
-        #########################
+        # Get area of the trapezoid: distance between x and last x multiplied by average height of y and last y.
+        trapezoid_x = cur_fpr - last_fpr
+        trapezoid_avg_y = (cur_tpr + last_tpr)/2
+        # Add this trapezoid area to the total AUC
+        auc += trapezoid_x * trapezoid_avg_y
+        # Shift last FPR and TPR before continuing loop
         last_fpr = cur_fpr
         last_tpr = cur_tpr
 
