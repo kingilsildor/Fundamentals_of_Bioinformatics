@@ -1,2 +1,3 @@
 # Run the baseline script
 uv run skeleton_script_baseline_model.py data/vep/HGVS_2014_VEP_baseline.tsv data/BLOSUM62.txt -o data/baseline_output.tsv
+uv run skeleton_script_create_roc_plot.py -ibench data/HGVS_2014_benchmark.tsv -ipred data/vep/HGVS_2014_sift_scores.tsv -o data/SIFT_ROCplot_output.png
