@@ -83,14 +83,12 @@ def integrate(fpr, tpr):
     last_tpr = tpr[0]
 
     for cur_fpr, cur_tpr in list(zip(fpr, tpr))[1:]:
-        #########################
-        ### START CODING HERE ###
-        #########################
-        # Just copy and paste the code lines which you have completed in skeleton_script_create_roc_plot.py
-
-        #########################
-        ###  END CODING HERE  ###
-        #########################
+        # Get area of the trapezoid: distance between x and last x multiplied by average height of y and last y.
+        trapezoid_x = cur_fpr - last_fpr
+        trapezoid_avg_y = (cur_tpr + last_tpr)/2
+        # Add this trapezoid area to the total AUC
+        auc += trapezoid_x * trapezoid_avg_y
+        # Shift last FPR and TPR before continuing loop
         last_fpr = cur_fpr
         last_tpr = cur_tpr
 
